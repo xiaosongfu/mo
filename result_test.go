@@ -1,6 +1,9 @@
 package mo
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,6 +19,29 @@ func TestResultErr(t *testing.T) {
 	is := assert.New(t)
 
 	is.Equal(Result[int]{value: 0, isErr: true, err: assert.AnError}, Err[int](assert.AnError))
+}
+
+func TestResultErrf(t *testing.T) {
+	is := assert.New(t)
+
+	is.Equal(Result[int]{value: 0, isErr: true, err: assert.AnError}, Errf[int](assert.AnError.Error())) //nolint:govet
+}
+
+func TestResultTupleToResult(t *testing.T) {
+	is := assert.New(t)
+
+	is.Equal(Result[int]{value: 0, isErr: true, err: assert.AnError}, TupleToResult(42, assert.AnError))
+}
+
+func TestResultTry(t *testing.T) {
+	is := assert.New(t)
+
+	is.Equal(Result[int]{value: 42, isErr: false, err: nil}, Try(func() (int, error) {
+		return 42, nil
+	}))
+	is.Equal(Result[int]{value: 0, isErr: true, err: assert.AnError}, Try(func() (int, error) {
+		return 42, assert.AnError
+	}))
 }
 
 func TestResultIsOk(t *testing.T) {
@@ -177,4 +203,133 @@ func TestResultFlatMap(t *testing.T) {
 
 	is.Equal(Result[int]{value: 42, isErr: false, err: nil}, opt1)
 	is.Equal(Result[int]{value: 0, isErr: true, err: assert.AnError}, opt2)
+}
+
+func TestResultMarshalJSON(t *testing.T) {
+	is := assert.New(t)
+
+	result1 := Ok("foo")
+	result2 := Err[string](fmt.Errorf("an error"))
+	result3 := Ok("")
+
+	value, err := result1.MarshalJSON()
+	is.NoError(err)
+	is.Equal(`{"result":"foo"}`, string(value))
+
+	value, err = result2.MarshalJSON()
+	is.NoError(err)
+	is.Equal(`{"error":{"message":"an error"}}`, string(value))
+
+	value, err = result3.MarshalJSON()
+	is.NoError(err)
+	is.Equal(`{"result":""}`, string(value))
+
+	type testStruct struct {
+		Field Result[string]
+	}
+
+	resultInStruct := testStruct{
+		Field: result1,
+	}
+	var marshalled []byte
+	marshalled, err = json.Marshal(resultInStruct)
+	is.NoError(err)
+	is.Equal(`{"Field":{"result":"foo"}}`, string(marshalled))
+}
+
+func TestResultUnmarshalJSON(t *testing.T) {
+	is := assert.New(t)
+
+	result1 := Ok("foo")
+	result2 := Err[string](fmt.Errorf("an error"))
+	result3 := Ok("")
+
+	err := result1.UnmarshalJSON([]byte(`{"result":"foo"}`))
+	is.NoError(err)
+	is.Equal(Ok("foo"), result1)
+
+	var res Result[string]
+	err = json.Unmarshal([]byte(`{"result":"foo"}`), &res)
+	is.NoError(err)
+	is.Equal(res, result1)
+
+	err = result2.UnmarshalJSON([]byte(`{"error":{"message":"an error"}}`))
+	is.NoError(err)
+	is.Equal(Err[string](fmt.Errorf("an error")), result2)
+
+	err = result3.UnmarshalJSON([]byte(`{"result":""}`))
+	is.NoError(err)
+	is.Equal(Ok(""), result3)
+
+	type testStruct struct {
+		Field Result[string]
+	}
+
+	unmarshal := testStruct{}
+	err = json.Unmarshal([]byte(`{"Field":{"result":"foo"}}`), &unmarshal)
+	is.NoError(err)
+	is.Equal(testStruct{Field: Ok("foo")}, unmarshal)
+
+	unmarshal = testStruct{}
+	err = json.Unmarshal([]byte(`{"Field":{"error":{"message":"an error"}}}`), &unmarshal)
+	is.NoError(err)
+	is.Equal(testStruct{Field: Err[string](fmt.Errorf("an error"))}, unmarshal)
+
+	unmarshal = testStruct{}
+	err = json.Unmarshal([]byte(`{}`), &unmarshal)
+	is.NoError(err)
+	is.Equal(testStruct{Field: Ok("")}, unmarshal)
+
+	// Both result and error are set; unmarshal to Err
+	unmarshal = testStruct{}
+	err = json.Unmarshal([]byte(`{"Field":{"result":"foo","error":{"message":"an error"}}}`), &unmarshal)
+	is.NoError(err)
+	is.Equal(testStruct{Field: Err[string](fmt.Errorf("an error"))}, unmarshal)
+
+	// Bad structure for error; cannot unmarshal
+	unmarshal = testStruct{}
+	err = json.Unmarshal([]byte(`{"Field":{"result":"foo","error":true}}`), &unmarshal)
+	is.Error(err)
+
+	unmarshal = testStruct{}
+	err = json.Unmarshal([]byte(`{"Field": "}`), &unmarshal)
+	is.Error(err)
+}
+
+// TestResultFoldSuccess tests the Fold method with a successful result.
+func TestResultFoldSuccess(t *testing.T) {
+	is := assert.New(t)
+	result := Result[int]{value: 42, isErr: false, err: nil}
+
+	successFunc := func(value int) string {
+		return fmt.Sprintf("Success: %v", value)
+	}
+	failureFunc := func(err error) string {
+		return fmt.Sprintf("Failure: %v", err)
+	}
+
+	folded := Fold[error, int, string](result, successFunc, failureFunc)
+	expected := "Success: 42"
+
+	is.Equal(expected, folded)
+}
+
+// TestResultFoldFailure tests the Fold method with a failure result.
+func TestResultFoldFailure(t *testing.T) {
+	err := errors.New("result error")
+	is := assert.New(t)
+
+	result := Result[int]{value: 0, isErr: true, err: err}
+
+	successFunc := func(value int) string {
+		return fmt.Sprintf("Success: %v", value)
+	}
+	failureFunc := func(err error) string {
+		return fmt.Sprintf("Failure: %v", err)
+	}
+
+	folded := Fold[error, int, string](result, successFunc, failureFunc)
+	expected := fmt.Sprintf("Failure: %v", err)
+
+	is.Equal(expected, folded)
 }

@@ -1,6 +1,9 @@
 package mo
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 func ExampleSome() {
 	some := Some(42)
@@ -32,6 +35,27 @@ func ExampleTupleToOption() {
 
 	fmt.Println(result)
 	// Output: 1234
+}
+
+func ExampleEmptyableToOption() {
+	cb := func(ok bool) error {
+		if ok {
+			return nil
+		}
+
+		return fmt.Errorf("an error")
+	}
+
+	err := cb(false)
+
+	none := EmptyableToOption(err)
+	result, ok := none.Get()
+
+	fmt.Println(result)
+	fmt.Println(ok)
+	// Output:
+	// an error
+	// true
 }
 
 func ExampleOption_some() {
@@ -168,6 +192,22 @@ func ExampleOption_OrEmpty_none() {
 	// Output: 0
 }
 
+func ExampleOption_ToPointer_some() {
+	some := Some(42)
+	result := some.ToPointer()
+
+	fmt.Println(*result)
+	// Output: 42
+}
+
+func ExampleOption_ToPointer_none() {
+	none := None[int]()
+	result := none.ToPointer()
+
+	fmt.Println(result)
+	// Output: <nil>
+}
+
 func ExampleOption_Match_some() {
 	some := Some(42)
 	result := some.Match(
@@ -256,4 +296,68 @@ func ExampleOption_FlatMap_none() {
 
 	fmt.Println(result.IsPresent(), result.OrEmpty())
 	// Output: false 0
+}
+
+func ExampleOption_MarshalJSON_some() {
+	type test struct {
+		Email Option[string] `json:"email"`
+	}
+
+	value := test{Email: Some("samuel@example.com")}
+	result, err := json.Marshal(value)
+
+	fmt.Println(string(result))
+	fmt.Println(err)
+	// Output:
+	// {"email":"samuel@example.com"}
+	// <nil>
+}
+
+func ExampleOption_MarshalJSON_none() {
+	type test struct {
+		Email Option[string] `json:"email"`
+	}
+
+	value := test{Email: None[string]()}
+	result, err := json.Marshal(value)
+
+	fmt.Println(string(result))
+	fmt.Println(err)
+	// Output:
+	// {"email":null}
+	// <nil>
+}
+
+func ExampleOption_UnmarshalJSON_some() {
+	type test struct {
+		Email Option[string] `json:"email"`
+	}
+
+	value := []byte(`{"email":"samuel@example.com"}`)
+
+	var result test
+	err := json.Unmarshal(value, &result)
+
+	fmt.Println(result.Email.Get())
+	fmt.Println(err)
+	// Output:
+	// samuel@example.com true
+	// <nil>
+}
+
+func ExampleOption_UnmarshalJSON_none() {
+	type test struct {
+		Email Option[string] `json:"email"`
+	}
+
+	value := []byte(`{"email":null}`)
+
+	var result test
+	err := json.Unmarshal(value, &result)
+
+	fmt.Println(result.Email.Get())
+	fmt.Println(err)
+	// Output:
+	// false
+	// <nil>
 }

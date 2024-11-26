@@ -1,5 +1,5 @@
 
-FROM golang:1.18-bullseye
+FROM golang:1.23.0-bullseye
 
 WORKDIR /go/src/github.com/samber/mo
 

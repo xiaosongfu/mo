@@ -1,12 +1,14 @@
 # mo - Monads
 
 [![tag](https://img.shields.io/github/tag/samber/mo.svg)](https://github.com/samber/mo/releases)
+![Go Version](https://img.shields.io/badge/Go-%3E%3D%201.18-%23007d9c)
 [![GoDoc](https://godoc.org/github.com/samber/mo?status.svg)](https://pkg.go.dev/github.com/samber/mo)
-![Build Status](https://github.com/samber/mo/actions/workflows/go.yml/badge.svg)
+![Build Status](https://github.com/samber/mo/actions/workflows/test.yml/badge.svg)
 [![Go report](https://goreportcard.com/badge/github.com/samber/mo)](https://goreportcard.com/report/github.com/samber/mo)
-[![codecov](https://codecov.io/gh/samber/mo/branch/master/graph/badge.svg)](https://codecov.io/gh/samber/mo)
+[![Coverage](https://img.shields.io/codecov/c/github/samber/do)](https://codecov.io/gh/samber/mo)
+[![License](https://img.shields.io/github/license/samber/mo)](./LICENSE)
 
-🦄 **`samber/mo` brings monads and populars FP abstractions to Go projects. `samber/mo` uses the recent Go 1.18+ Generics.**
+🦄 **`samber/mo` brings monads and popular FP abstractions to Go projects. `samber/mo` uses the recent Go 1.18+ Generics.**
 
 **Inspired by:**
 
@@ -21,7 +23,7 @@
 
 **Why this name?**
 
-I love **short name** for such utility library. This name is similar to "Monad Go" and no Go package currently uses this name.
+I love **short name** for such utility library. This name is similar to "Monad Go" and no Go package uses this name.
 
 ## 💡 Features
 
@@ -30,6 +32,7 @@ We currently support the following data types:
 - `Option[T]` (Maybe)
 - `Result[T]`
 - `Either[A, B]`
+- `EitherX[T1, ..., TX]` (With X between 3 and 5)
 - `Future[T]`
 - `IO[T]`
 - `IOEither[T]`
@@ -46,6 +49,8 @@ go get github.com/samber/mo@v1
 This library is v1 and follows SemVer strictly.
 
 No breaking changes will be made to exported APIs before v2.0.0.
+
+This library has no dependencies except the Go std lib.
 
 ## 💡 Quick start
 
@@ -97,6 +102,18 @@ option3 := option1.Match(
 
 More examples in [documentation](https://godoc.org/github.com/samber/mo).
 
+### Tips for lazy developers
+
+I cannot recommend it, but in case you are too lazy for repeating `mo.` everywhere, you can import the entire library into the namespace.
+
+```go
+import (
+    . "github.com/samber/mo"
+)
+```
+
+I take no responsibility on this junk. 😁 💩
+
 ## 🤠 Documentation and examples
 
 [GoDoc: https://godoc.org/github.com/samber/mo](https://godoc.org/github.com/samber/mo)
@@ -105,56 +122,89 @@ More examples in [documentation](https://godoc.org/github.com/samber/mo).
 
 `Option` is a container for an optional value of type `T`. If value exists, `Option` is of type `Some`. If the value is absent, `Option` is of type `None`.
 
+Implements:
+- `mo.Foldable[T, U]`
+
 Constructors:
 
-- `mo.Some()` [doc](https://pkg.go.dev/github.com/samber/mo#Some)
-- `mo.None()` [doc](https://pkg.go.dev/github.com/samber/mo#None)
-- `mo.TupleToOption()` [doc](https://pkg.go.dev/github.com/samber/mo#TupleToOption)
+- `mo.Some()` [doc](https://pkg.go.dev/github.com/samber/mo#Some) - [play](https://go.dev/play/p/iqz2n9n0tDM)
+- `mo.None()` [doc](https://pkg.go.dev/github.com/samber/mo#None) - [play](https://go.dev/play/p/yYQPsYCSYlD)
+- `mo.TupleToOption()` [doc](https://pkg.go.dev/github.com/samber/mo#TupleToOption) - [play](https://go.dev/play/p/gkrg2pZwOty)
+- `mo.EmptyableToOption()` [doc](https://pkg.go.dev/github.com/samber/mo#EmptyableToOption) - [play](https://go.dev/play/p/GSpQQ-q-UES)
+- `mo.PointerToOption()` [doc](https://pkg.go.dev/github.com/samber/mo#PointerToOption) - [play](https://go.dev/play/p/yPVMj4DUb-I)
 
 Methods:
 
-- `.IsPresent()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.IsPresent)
-- `.IsAbsent()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.IsAbsent)
-- `.Size()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.Size)
-- `.Get()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.Get)
-- `.MustGet()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.MustGet)
-- `.OrElse()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.OrElse)
-- `.OrEmpty()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.OrEmpty)
+- `.IsPresent()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.IsPresent) - [play](https://go.dev/play/p/nDqIaiihyCA)
+- `.IsAbsent()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.IsAbsent) - [play](https://go.dev/play/p/23e2zqyVOQm)
+- `.Size()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.Size) - [play](https://go.dev/play/p/7ixCNG1E9l7)
+- `.Get()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.Get) - [play](https://go.dev/play/p/0-JBa1usZRT)
+- `.MustGet()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.MustGet) - [play](https://go.dev/play/p/RVBckjdi5WR)
+- `.OrElse()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.OrElse) - [play](https://go.dev/play/p/TrGByFWCzXS)
+- `.OrEmpty()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.OrEmpty) - [play](https://go.dev/play/p/SpSUJcE-tQm)
+- `.ToPointer()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.ToPointer) - [play](https://go.dev/play/p/N43w92SM-Bs)
 - `.ForEach()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.ForEach)
-- `.Match()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.Match)
-- `.Map()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.Map)
-- `.MapNone()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.MapNone)
-- `.FlatMap()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.FlatMap)
+- `.Match()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.Match) - [play](https://go.dev/play/p/1V6st3LDJsM)
+- `.Map()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.Map) - [play](https://go.dev/play/p/mvfP3pcP_eJ)
+- `.MapNone()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.MapNone) - [play](https://go.dev/play/p/_KaHWZ6Q17b)
+- `.FlatMap()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.FlatMap) - [play](https://go.dev/play/p/OXO-zJx6n5r)
+- `.MarshalJSON()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.MarshalJSON)
+- `.UnmarshalJSON()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.UnmarshalJSON)
+- `.MarshalText()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.MarshalText)
+- `.UnmarshalText()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.UnmarshalText)
+- `.MarshalBinary()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.MarshalBinary)
+- `.UnmarshalBinary()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.UnmarshalBinary)
+- `.GobEncode()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.GobEncode)
+- `.GobDecode()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.GobDecode)
+- `.Scan()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.Scan)
+- `.Value()` [doc](https://pkg.go.dev/github.com/samber/mo#Option.Value)
+
+Other:
+
+- `mo.Fold[T, U, R any](f Foldable[T, U], successFunc func(U) R, failureFunc func(T) R) R` [doc](https://pkg.go.dev/github.com/samber/mo#Fold)
 
 ### Result[T any]
 
 `Result` respresent a result of an action having one of the following output: success or failure. An instance of `Result` is an instance of either `Ok` or `Err`. It could be compared to `Either[error, T]`.
 
+Implements:
+- `mo.Foldable[T, U]`
+
 Constructors:
 
-- `mo.Ok()` [doc](https://pkg.go.dev/github.com/samber/mo#Ok)
-- `mo.Err()` [doc](https://pkg.go.dev/github.com/samber/mo#Err)
-- `mo.TupleToResult()` [doc](https://pkg.go.dev/github.com/samber/mo#TupleToResult)
+- `mo.Ok()` [doc](https://pkg.go.dev/github.com/samber/mo#Ok) - [play](https://go.dev/play/p/PDwADdzNoyZ)
+- `mo.Err()` [doc](https://pkg.go.dev/github.com/samber/mo#Err) - [play](https://go.dev/play/p/PDwADdzNoyZ)
+- `mo.Errf()` [doc](https://pkg.go.dev/github.com/samber/mo#Errf) - [play](https://go.dev/play/p/N43w92SM-Bs)
+- `mo.TupleToResult()` [doc](https://pkg.go.dev/github.com/samber/mo#TupleToResult) - [play](https://go.dev/play/p/KWjfqQDHQwa)
+- `mo.Try()` [doc](https://pkg.go.dev/github.com/samber/mo#Try) - [play](https://go.dev/play/p/ilOlQx-Mx42)
 
 Methods:
 
-- `.IsOk()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.IsOk)
-- `.IsError()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.IsError)
-- `.Error()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.Error)
-- `.Get()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.Get)
-- `.MustGet()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.MustGet)
-- `.OrElse()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.OrElse)
-- `.OrEmpty()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.OrEmpty)
-- `.ToEither()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.ToEither)
+- `.IsOk()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.IsOk) - [play](https://go.dev/play/p/sfNvBQyZfgU)
+- `.IsError()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.IsError) - [play](https://go.dev/play/p/xkV9d464scV)
+- `.Error()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.Error) - [play](https://go.dev/play/p/CSkHGTyiXJ5)
+- `.Get()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.Get) - [play](https://go.dev/play/p/8KyX3z6TuNo)
+- `.MustGet()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.MustGet) - [play](https://go.dev/play/p/8LSlndHoTAE)
+- `.OrElse()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.OrElse) - [play](https://go.dev/play/p/MN_ULx0soi6)
+- `.OrEmpty()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.OrEmpty) - [play](https://go.dev/play/p/rdKtBmOcMLh)
+- `.ToEither()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.ToEither) - [play](https://go.dev/play/p/Uw1Zz6b952q)
 - `.ForEach()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.ForEach)
-- `.Match()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.Match)
-- `.Map()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.Map)
-- `.MapErr()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.MapErr)
-- `.FlatMap()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.FlatMap)
+- `.Match()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.Match) - [play](https://go.dev/play/p/-_eFaLJ31co)
+- `.Map()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.Map) - [play](https://go.dev/play/p/-ndpN_b_OSc)
+- `.MapErr()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.MapErr) - [play](https://go.dev/play/p/WraZixg9GGf)
+- `.FlatMap()` [doc](https://pkg.go.dev/github.com/samber/mo#Result.FlatMap) - [play](https://go.dev/play/p/Ud5QjZOqg-7)
+
+Other:
+
+- `mo.Fold[T, U, R any](f Foldable[T, U], successFunc func(U) R, failureFunc func(T) R) R` [doc](https://pkg.go.dev/github.com/samber/mo#Fold)
+- `mo.Do[T any](fn func() T) (result mo.Result[T])` [doc](https://pkg.go.dev/github.com/samber/mo#Do)
 
 ### Either[L any, R any]
 
-`Either` respresents a value of 2 possible types. An instance of `Either` is an instance of either `A` or `B`.
+`Either` represents a value of 2 possible types. An instance of `Either` is an instance of either `A` or `B`.
+
+Implements:
+- `mo.Foldable[T, U]`
 
 Constructors:
 
@@ -169,6 +219,7 @@ Methods:
 - `.Right()` [doc](https://pkg.go.dev/github.com/samber/mo#Either.Right)
 - `.MustLeft()` [doc](https://pkg.go.dev/github.com/samber/mo#Either.MustLeft)
 - `.MustRight()` [doc](https://pkg.go.dev/github.com/samber/mo#Either.MustRight)
+- `.Unpack()` [doc](https://pkg.go.dev/github.com/samber/mo#Either.Unpack)
 - `.LeftOrElse()` [doc](https://pkg.go.dev/github.com/samber/mo#Either.LeftOrElse)
 - `.RightOrElse()` [doc](https://pkg.go.dev/github.com/samber/mo#Either.RightOrElse)
 - `.LeftOrEmpty()` [doc](https://pkg.go.dev/github.com/samber/mo#Either.LeftOrEmpty)
@@ -178,6 +229,36 @@ Methods:
 - `.Match()` [doc](https://pkg.go.dev/github.com/samber/mo#Either.Match)
 - `.MapLeft()` [doc](https://pkg.go.dev/github.com/samber/mo#Either.MapLeft)
 - `.MapRight()` [doc](https://pkg.go.dev/github.com/samber/mo#Either.MapRight)
+
+Other:
+
+- `mo.Fold[T, U, R any](f Foldable[T, U], successFunc func(U) R, failureFunc func(T) R) R` [doc](https://pkg.go.dev/github.com/samber/mo#Fold)
+
+### EitherX[T1, ..., TX] (With X between 3 and 5)
+
+`EitherX` respresents a value of X possible types. For example, an `Either3` value is either `T1`, `T2` or `T3`.
+
+Constructors:
+
+- `mo.NewEitherXArgY()` [doc](https://pkg.go.dev/github.com/samber/mo#NewEither5Arg1). Eg:
+  - `mo.NewEither3Arg1[A, B, C](A)`
+  - `mo.NewEither3Arg2[A, B, C](B)`
+  - `mo.NewEither3Arg3[A, B, C](C)`
+  - `mo.NewEither4Arg1[A, B, C, D](A)`
+  - `mo.NewEither4Arg2[A, B, C, D](B)`
+  - ...
+
+Methods:
+
+- `.IsArgX()` [doc](https://pkg.go.dev/github.com/samber/mo#Either5.IsArg1)
+- `.ArgX()` [doc](https://pkg.go.dev/github.com/samber/mo#Either5.Arg1)
+- `.MustArgX()` [doc](https://pkg.go.dev/github.com/samber/mo#Either5.MustArg1)
+- `.Unpack()` [doc](https://pkg.go.dev/github.com/samber/mo#Either5.Unpack)
+- `.ArgXOrElse()` [doc](https://pkg.go.dev/github.com/samber/mo#Either5.Arg1OrElse)
+- `.ArgXOrEmpty()` [doc](https://pkg.go.dev/github.com/samber/mo#Either5.Arg1OrEmpty)
+- `.ForEach()` [doc](https://pkg.go.dev/github.com/samber/mo#Either5.ForEach)
+- `.Match()` [doc](https://pkg.go.dev/github.com/samber/mo#Either5.Match)
+- `.MapArgX()` [doc](https://pkg.go.dev/github.com/samber/mo#Either5.MapArg1)
 
 ### Future[T any]
 
@@ -287,6 +368,12 @@ Methods:
 - `.Modify()` [doc](https://pkg.go.dev/github.com/samber/mo#TaskEither.Modify)
 - `.Put()` [doc](https://pkg.go.dev/github.com/samber/mo#TaskEither.Put)
 
+### Foldable[T, U]
+
+Foldable represents a type that can be folded into a single value based on its state.
+
+- `mo.Fold[T, U, R any](f Foldable[T, U], successFunc func(U) R, failureFunc func(T) R) R` [doc](https://pkg.go.dev/github.com/samber/mo#Fold)
+
 ## 🛩 Benchmark
 
 // @TODO
@@ -295,7 +382,7 @@ This library does not use `reflect` package. We don't expect overhead.
 
 ## 🤝 Contributing
 
-- Ping me on twitter [@samuelberthe](https://twitter.com/samuelberthe) (DMs, mentions, whatever :))
+- Ping me on Twitter [@samuelberthe](https://twitter.com/samuelberthe) (DMs, mentions, whatever :))
 - Fork the [project](https://github.com/samber/mo)
 - Fix [open issues](https://github.com/samber/mo/issues) or request new features
 
@@ -319,15 +406,15 @@ make test
 make watch-test
 ```
 
-## 👤 Authors
+## 👤 Contributors
 
-- Samuel Berthe
+![Contributors](https://contrib.rocks/image?repo=samber/mo)
 
 ## 💫 Show your support
 
 Give a ⭐️ if this project helped you!
 
-[![support us](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/samber)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/samber?style=for-the-badge)](https://github.com/sponsors/samber)
 
 ## 📝 License
 
